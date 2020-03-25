@@ -4,6 +4,7 @@ using System.Text;
 using System.IO;
 using System.Reflection;
 using CRFSharp;
+using Microsoft.Extensions.Configuration;
 
 /*
  * convert raw corpus to crfpp training data format, a example as follows:
@@ -40,23 +41,29 @@ namespace corpus2tag
                 return;
             }
 
+            var builder = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json");
+
+            var configuration = builder.Build();
+
 
             //Load feature generator for external dll files
             IGenerateFeature featureGenerator = null;
-            if (Properties.Settings.Default.FeatureGeneratorDLL.Length > 0 &&
-                File.Exists(Properties.Settings.Default.FeatureGeneratorDLL) == true)
+            if (configuration["FeatureGeneratorDLL"].Length > 0 &&
+                File.Exists(configuration["FeatureGeneratorDLL"]) == true)
             {
-                Console.WriteLine("Loading external DLL: {0}", Properties.Settings.Default.FeatureGeneratorDLL);
-                var ass = Assembly.LoadFrom(Properties.Settings.Default.FeatureGeneratorDLL);
+                Console.WriteLine("Loading external DLL: {0}", configuration["FeatureGeneratorDLL"]);
+                var ass = Assembly.LoadFrom(configuration["FeatureGeneratorDLL"]);
                 if (ass == null)
                 {
-                    Console.WriteLine("Load {0} failed.", Properties.Settings.Default.FeatureGeneratorDLL);
+                    Console.WriteLine("Load {0} failed.", configuration["FeatureGeneratorDLL"]);
                     return;
                 }
-                featureGenerator = ass.CreateInstance(Properties.Settings.Default.FeatureGeneratorNamespace) as IGenerateFeature;
+                featureGenerator = ass.CreateInstance(configuration["FeatureGeneratorNamespace"]) as IGenerateFeature;
                 if (featureGenerator == null)
                 {
-                    Console.WriteLine("Create instance {0} failed.", Properties.Settings.Default.FeatureGeneratorNamespace);
+                    Console.WriteLine("Create instance {0} failed.", configuration["FeatureGeneratorNamespace"]);
                     return;
                 }
 
